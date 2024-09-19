@@ -10,9 +10,10 @@ struct Point {
 };
 
 class Shape {
+    int vertices;
+    Point** points;
+    
     public: 
-        int vertices;
-        Point** points;
 
         Shape (int _vertices) {
             vertices = _vertices;
@@ -56,7 +57,7 @@ int main () {
     //          tri1 = (0, 0)
     //          tri2 = (1, 2)
     //          tri3 = (2, 0)
-    Point tri1 = Point{0, 0};
+    Point tri1 = Point(0, 0);
     Point tri2;
     tri2.x = 1;
     tri2.y = 2;
@@ -74,10 +75,10 @@ int main () {
     //          quad3 = (2, 2)
     //          quad4 = (2, 0)
 
-    Point quad1 = Point{0, 0};
-    Point quad2 = Point{0, 2};
-    Point quad3 = Point{2, 2};
-    Point quad4 = Point{2, 0};
+    Point quad1 = Point(0, 0);
+    Point quad2 = Point(0, 2);
+    Point quad3 = Point(2 ,2);
+    Point quad4 = Point(2, 0);
 
     // adding points to quad
     Point quadPts[4] = {quad1, quad2, quad3, quad4};
@@ -87,7 +88,6 @@ int main () {
     double* triArea = tri->area();
     double* quadArea = quad->area();
 
-    // FIXME: print out area of tri and area of quad
     std::cout << "Area of triangle is " << triArea << std::endl;
     std::cout << "Area of quad is " << quadArea << std::endl;
 
