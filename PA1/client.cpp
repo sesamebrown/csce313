@@ -5,7 +5,6 @@
     Texas A&M University
     Date: 9/15/2024
 	
-	Please include your Name, UIN, and the date below
 	Name: Eden Kim
 	UIN: 632008852
 	Date: 9/29/2024
@@ -43,6 +42,12 @@ int main (int argc, char *argv[]) {
 
 	//Task 1:
 	//Run the server process as a child of the client process
+	char* server[] = {(char*) "../server", nullptr};
+
+	pid_t childpid;
+	if ((childpid = fork()) == 0) {
+		execvp("./server", server);
+	}
 
     FIFORequestChannel chan("control", FIFORequestChannel::CLIENT_SIDE);
 
