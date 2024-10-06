@@ -1,4 +1,5 @@
 #include <threading.h>
+#include <stdbool.h>
 
 void t_init()
 {
@@ -18,7 +19,7 @@ void t_init()
 
 int32_t t_create(fptr foo, int32_t arg1, int32_t arg2)
 {
-        for (int i = 0; i < 16; i++) {
+        for (volatile int i = 0; i < 16; i++) {
                 if (contexts[i].state == INVALID) {
                         getcontext(&contexts[i].context);
                         contexts[i].context.uc_stack.ss_sp = (char *) malloc(STK_SZ);
@@ -36,11 +37,52 @@ int32_t t_create(fptr foo, int32_t arg1, int32_t arg2)
 }
 
 int32_t t_yield()
-{
-        // TODO
+{       
+        int32_t scheduled = schedule();
+        if (scheduled == 1) {
+                return 0;
+        }
+
+        int32_t validCount = 0;
+
+        for (int i = 0; i < 16; i++) {
+                if (contexts[i].state == VALID) {
+                        validCount++;
+                }
+        }
+
+        return validCount;
 }
 
 void t_finish()
 {
-        // TODO
+        contexts[current_context_idx].state = DONE;
+        free(contexts[current_context_idx].context.uc_stack.ss_sp);
+
+        for (int i = 0; i < 16; i++) {
+                if (contexts[i].state == VALID) {
+                        swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
+                        break;
+                }
+        }
+}
+
+int32_t schedule() {
+        bool foundContext = false;
+
+        for (int i = 0; i < 16; i++) {
+                if ((contexts[i].state == VALID) && (i != current_context_idx)) {
+                        foundContext = true;
+                        swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
+                        current_context_idx = (uint8_t) i;
+
+                        break;
+                }
+        }
+        
+        if (foundContext == false) {
+                return 1;
+        }
+
+        return 0;
 }

@@ -83,4 +83,6 @@ int32_t t_yield();
  */
 void t_finish();
 
+int32_t schedule();
+
 #endif
