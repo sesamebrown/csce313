@@ -45,14 +45,14 @@ int32_t t_create(fptr foo, int32_t arg1, int32_t arg2)
 
 int32_t t_yield()
 {       
-        int32_t scheduled = schedule();
-        if (scheduled == 1) {
-                return 0;
-        }
-
         int32_t validCount = 0;
 
-        for (int i = 0; i < NUM_CTX; i++) {
+        int32_t scheduled = schedule();
+        if (scheduled == 1) {
+                return validCount;
+        }
+
+        for (int i = current_context_idx; i < NUM_CTX; i++) {
                 if (contexts[i].state == VALID) {
                         validCount++;
                 }
@@ -63,14 +63,28 @@ int32_t t_yield()
 
 void t_finish()
 {
-        contexts[current_context_idx].state = DONE;
-        free(contexts[current_context_idx].context.uc_stack.ss_sp);
+        bool foundContext = false;
 
+        if (contexts[current_context_idx].context.uc_stack.ss_sp) {
+                free(contexts[current_context_idx].context.uc_stack.ss_sp);
+
+                contexts[current_context_idx].context.uc_stack.ss_sp = NULL;
+                contexts[current_context_idx].context.uc_stack.ss_size = 0;
+        }
+
+        contexts[current_context_idx].state = DONE;
+        
         for (int i = 0; i < NUM_CTX; i++) {
                 if (contexts[i].state == VALID) {
                         swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
                         break;
                 }
+        }
+        
+        if (!foundContext) {
+                current_context_idx = 0;
+                setcontext(&contexts[current_context_idx].context);
+                return;
         }
 }
 
@@ -80,6 +94,7 @@ int32_t schedule() {
         for (int i = 0; i < NUM_CTX; i++) {
                 if ((contexts[i].state == VALID) && (i != current_context_idx)) {
                         foundContext = true;
+
                         swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
                         current_context_idx = (uint8_t) i;
 
