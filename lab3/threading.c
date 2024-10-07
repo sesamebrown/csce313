@@ -8,31 +8,38 @@ void t_init()
         // The first context (index 0) represents the main thread, so set it to VALID.
         // Initialize current_context_ id to o to mark the currently running context,
 
-        for (int i = 0; i < 16; i++) {
-                memset(&contexts[i].context, 0, sizeof(contexts[i].context));
+        for (int i = 0; i < NUM_CTX; i++) {
+                memset(contexts, 0, sizeof(contexts));
                 contexts[i].state = INVALID;
         }
         contexts[0].state = VALID;
-
         current_context_idx = 0;
+        getcontext(&contexts[0].context);
 }
 
 int32_t t_create(fptr foo, int32_t arg1, int32_t arg2)
 {
-        for (volatile int i = 0; i < 16; i++) {
+        bool foundContext = false;
+
+        for (volatile int i = 1; i < NUM_CTX; i++) {
                 if (contexts[i].state == INVALID) {
-                        getcontext(&contexts[i].context);
-                        contexts[i].context.uc_stack.ss_sp = (char *) malloc(STK_SZ);
+                        foundContext = true;
+
+                        contexts[i].context.uc_stack.ss_sp = malloc(STK_SZ);
                         contexts[i].context.uc_stack.ss_size = STK_SZ;
                         contexts[i].context.uc_stack.ss_flags = 0;
-                        contexts[i].context.uc_link = NULL;
-                        makecontext(&contexts[i].context, (void (*)()) foo, 2, arg1, arg2);
+                        contexts[i].context.uc_link = &contexts[0].context;
+
+                        getcontext(&contexts[i].context);
+                        makecontext(&contexts[i].context, (void (*)(void)) foo, 2, arg1, arg2);
+                        contexts[0].state = VALID;
                         break;
                 }
-                else if (i == 15 && contexts[i].state == VALID) {
-                        return 1;
-                }
         }
+        if (!foundContext) {
+                return 1;
+        }
+
         return 0;
 }
 
@@ -45,7 +52,7 @@ int32_t t_yield()
 
         int32_t validCount = 0;
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < NUM_CTX; i++) {
                 if (contexts[i].state == VALID) {
                         validCount++;
                 }
@@ -59,7 +66,7 @@ void t_finish()
         contexts[current_context_idx].state = DONE;
         free(contexts[current_context_idx].context.uc_stack.ss_sp);
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < NUM_CTX; i++) {
                 if (contexts[i].state == VALID) {
                         swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
                         break;
@@ -70,7 +77,7 @@ void t_finish()
 int32_t schedule() {
         bool foundContext = false;
 
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < NUM_CTX; i++) {
                 if ((contexts[i].state == VALID) && (i != current_context_idx)) {
                         foundContext = true;
                         swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
@@ -80,7 +87,7 @@ int32_t schedule() {
                 }
         }
         
-        if (foundContext == false) {
+        if (!foundContext) {
                 return 1;
         }
 
