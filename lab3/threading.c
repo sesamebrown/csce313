@@ -8,8 +8,9 @@ void t_init()
         // The first context (index 0) represents the main thread, so set it to VALID.
         // Initialize current_context_ id to o to mark the currently running context,
 
+        memset(contexts, 0, sizeof(contexts));
+        
         for (int i = 0; i < NUM_CTX; i++) {
-                memset(contexts, 0, sizeof(contexts));
                 contexts[i].state = INVALID;
         }
         contexts[0].state = VALID;
@@ -32,7 +33,7 @@ int32_t t_create(fptr foo, int32_t arg1, int32_t arg2)
 
                         getcontext(&contexts[i].context);
                         makecontext(&contexts[i].context, (void (*)(void)) foo, 2, arg1, arg2);
-                        contexts[0].state = VALID;
+                        contexts[i].state = VALID;
                         break;
                 }
         }
@@ -63,29 +64,19 @@ int32_t t_yield()
 
 void t_finish()
 {
-        bool foundContext = false;
+    if (contexts[current_context_idx].context.uc_stack.ss_sp) {
+        free(contexts[current_context_idx].context.uc_stack.ss_sp);
 
-        if (contexts[current_context_idx].context.uc_stack.ss_sp) {
-                free(contexts[current_context_idx].context.uc_stack.ss_sp);
+        contexts[current_context_idx].context.uc_stack.ss_sp = NULL;
+        contexts[current_context_idx].context.uc_stack.ss_size = 0;
+    }
 
-                contexts[current_context_idx].context.uc_stack.ss_sp = NULL;
-                contexts[current_context_idx].context.uc_stack.ss_size = 0;
-        }
+    contexts[current_context_idx].state = DONE;
 
-        contexts[current_context_idx].state = DONE;
-        
-        for (int i = 0; i < NUM_CTX; i++) {
-                if (contexts[i].state == VALID) {
-                        swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
-                        break;
-                }
-        }
-        
-        if (!foundContext) {
-                current_context_idx = 0;
-                setcontext(&contexts[current_context_idx].context);
-                return;
-        }
+    if (schedule() == 1) {
+        current_context_idx = 0;
+        setcontext(&contexts[0].context);
+    }
 }
 
 int32_t schedule() {
