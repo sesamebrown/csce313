@@ -79,23 +79,27 @@ void t_finish()
     }
 }
 
+
 int32_t schedule() {
-        bool foundContext = false;
+    bool foundContext = false;
 
-        for (int i = 0; i < NUM_CTX; i++) {
-                if ((contexts[i].state == VALID) && (i != current_context_idx)) {
-                        foundContext = true;
+    int next_idx = (current_context_idx + 1) % NUM_CTX;
 
-                        swapcontext(&contexts[current_context_idx].context, &contexts[i].context);
-                        current_context_idx = (uint8_t) i;
-
-                        break;
-                }
+    for (int i = 0; i < NUM_CTX; i++) {
+        if (contexts[next_idx].state == VALID && next_idx != current_context_idx) {
+            foundContext = true;
+            
+            int prev_idx = current_context_idx;
+            current_context_idx = (uint8_t) next_idx;
+            swapcontext(&contexts[prev_idx].context, &contexts[current_context_idx].context);
+            break;
         }
-        
-        if (!foundContext) {
-                return 1;
-        }
+        next_idx = (next_idx + 1) % NUM_CTX;
+    }
 
-        return 0;
+    if (!foundContext) {
+        return 1;
+    }
+
+    return 0;
 }
