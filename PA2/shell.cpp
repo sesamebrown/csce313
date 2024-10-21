@@ -18,6 +18,33 @@
 #define WHITE  "\033[1;37m"
 #define NC     "\033[0m"
 
+std::vector<pid_t> background_processes;
+
+void sigchld_handler(int) {
+    pid_t pid;
+    int status;
+
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        auto it = std::find(background_processes.begin(), background_processes.end(), pid);
+        if (it != background_processes.end()) {
+            std::cout << "[" << pid << "] Done" << std::endl;
+            background_processes.erase(it);
+        }
+    }
+}
+
+void setup_signal_handler() {
+    struct sigaction sa;
+    sa.sa_handler = sigchld_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+
+    if (sigaction(SIGCHLD, &sa, nullptr) == -1) {
+        perror("sigaction");
+        exit(1);
+    }
+}
+
 /**
  * Return Shell prompt to display before every command as a string
  * 
@@ -194,6 +221,7 @@ void process_commands(Tokenizer &tokens) {
 
 int main()
 {
+        setup_signal_handler();
         // Use setenv() and getenv() to set an environment variable for the previous PWD from 'PWD'
         char *prevPWD = getenv("PWD");
         if (prevPWD != nullptr) {
@@ -241,6 +269,9 @@ int main()
                 }
 
                 process_commands(tknr);
+
+                sigchld_handler(SIGCHLD);
+
 
                 // // fork to create child
                 // pid_t pid = fork();
