@@ -161,9 +161,7 @@ void process_commands(Tokenizer &tokens) {
                 }
                 else {  // if parent, wait for child to finish    
                         // Close pipes from parent so pipes receive `EOF`
-                        // Pipes will otherwise get stuck indefinitely waiting for parent input/output that will never occur
-                        wait(NULL);
-                        
+                        // Pipes will otherwise get stuck indefinitely waiting for parent input/output that will never occur                        
                         if (i > 0) {
                                 close(fdsBack[0]);
                                 close(fdsBack[1]);
@@ -176,7 +174,10 @@ void process_commands(Tokenizer &tokens) {
 
                         // If command is indicated as a background process, set up to ignore child signal to prevent zombie processes
                         if (command->isBackground()) {
-                                signal(SIGCHLD, SIG_IGN);
+                                pid_t bg_pid = waitpid(pid, NULL, WNOHANG);
+                                        if (bg_pid == -1) {
+                                        perror("waitpid");
+                                }
                         }
                         else {
                                 int status = 0;
