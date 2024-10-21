@@ -172,7 +172,7 @@ void process_commands(Tokenizer &tokens) {
                                 close(fdsFor[1]);
                         }
 
-                        // If command is indicated as a background process, set up to ignore child signal to prevent zombie processes
+                        // If command is indicated as a background process, set up to prevent zombie processes
                         if (command->isBackground()) {
                                 pid_t bg_pid;
                                 do {
