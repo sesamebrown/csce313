@@ -174,10 +174,11 @@ void process_commands(Tokenizer &tokens) {
 
                         // If command is indicated as a background process, set up to ignore child signal to prevent zombie processes
                         if (command->isBackground()) {
-                                pid_t bg_pid = waitpid(pid, NULL, WNOHANG);
-                                        if (bg_pid == -1) {
-                                        perror("waitpid");
+                                pid_t bg_pid;
+                                do {
+                                        bg_pid = waitpid(pid, nullptr, WNOHANG);
                                 }
+                                while (bg_pid == 0);
                         }
                         else {
                                 int status = 0;
