@@ -53,8 +53,8 @@ void print_prompt() {
 void process_commands(Tokenizer &tokens) {
         // Declare file descriptor variables for storing unnamed pipe fd's
         // Maintain both a FORWARD and BACKWARDS pipe in the parent for command redirection
-        int fdsBack[2];
-        int fdsFor[2];
+        int fdsBack[2] = {-1, -1};
+        int fdsFor[2]= {-1, -1};
 
         pipe(fdsFor);
         pipe(fdsBack);
