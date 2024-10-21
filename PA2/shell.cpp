@@ -240,8 +240,6 @@ int main()
 
                 process_commands(tknr);
 
-                delete tknr;
-
                 // // fork to create child
                 // pid_t pid = fork();
                 // if(pid < 0)
