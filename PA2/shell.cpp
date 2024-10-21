@@ -112,13 +112,13 @@ void process_commands(Tokenizer &tokens) {
                         if (i < tokens.commands.size() - 1) {  // i.e. {current command} | {next command} ...
                                 dup2(fdsFor[1], STDOUT_FILENO);     // Reidrect STDOUT to forward pipe
                                 close(fdsFor[1]);    // Close respective pipe end
-                                // close(fdsFor[0]);
+                                close(fdsFor[0]);
                         }
 
                         if (i > 0) {    // i.e. {first command} | {current command} ...
                                 dup2(fdsBack[0], STDIN_FILENO);     // Redirect STDIN to backward pipe
                                 close(fdsBack[0]);    // Close respective pipe end
-                                // close(fdsBack[1]);
+                                close(fdsBack[1]);
                         }
                         
                         if (command->hasInput()) {    // i.e. {command} < {input file}
@@ -164,14 +164,14 @@ void process_commands(Tokenizer &tokens) {
                         // Pipes will otherwise get stuck indefinitely waiting for parent input/output that will never occur                        
                         if (i > 0) {
                                 close(fdsBack[0]);
-                                // close(fdsBack[1]);
+                                close(fdsBack[1]);
                         }
 
                         if (i < tokens.commands.size() - 1) {
-                                // close(fdsFor[0]);
+                                close(fdsFor[0]);
                                 close(fdsFor[1]);
                         }
-                        
+
                         // If command is indicated as a background process, set up to ignore child signal to prevent zombie processes
                         if (command->isBackground()) {
                                 pid_t bg_pid = waitpid(pid, NULL, WNOHANG);
@@ -194,7 +194,10 @@ void process_commands(Tokenizer &tokens) {
 int main()
 {
         // Use setenv() and getenv() to set an environment variable for the previous PWD from 'PWD'
-        setenv("OLDPWD", getenv("PWD"), 1);
+        char *prevPWD = getenv("PWD");
+        if (prevPWD != nullptr) {
+                setenv("OLDPWD", prevPWD, 1);
+        }
 
         for(;;)
         {
