@@ -40,8 +40,7 @@ void print_prompt() {
 
         // Can use colored #define's to change output color by inserting into output stream
         // MODIFY to output a prompt format that has at least the USER and CURRENT WORKING DIRECTORY
-        // std::cout << YELLOW << "shell" << NC << " " << buf << " " << user << ":" << dir;
-        std::cout << GREEN << buf << " " << BLUE << user << ":" << YELLOW << dir << NC << "$ ";
+        std::cout << BLUE << buf << " " << user << ":" << YELLOW << dir << NC << "$ ";
 }
 
 /**
@@ -51,7 +50,7 @@ void print_prompt() {
  * Example: `ls -l / | grep etc`    ::  This command will list (in detailed list form `-l`) the root directory and then pipe into a filter for `etc`
  * When parsed into the Tokenizer, this will split into two separate commands, `ls -l /` and `grep etc`.
  */
-void process_commands() {
+void process_commands(Tokenizer &tokens) {
         // Declare file descriptor variables for storing unnamed pipe fd's
         // Maintain both a FORWARD and BACKWARDS pipe in the parent for command redirection
         int fdsBack[2];
@@ -61,9 +60,9 @@ void process_commands() {
         pipe(fdsBack);
 
         // LOOP THROUGH COMMANDS FROM SHELL INPUT
-        std::string shellInput;
-        std::getline(std::cin, shellInput);
-        Tokenizer tokens(shellInput);
+        // std::string shellInput;
+        // std::getline(std::cin, shellInput);
+        // Tokenizer tokens(shellInput);
 
         for (unsigned int i = 0; i < tokens.commands.size(); i++) {
         // Check if the command is 'cd' first
@@ -71,11 +70,16 @@ void process_commands() {
         // Use getenv(), setenv(), and chdir() here to implement this command
                 Command *command = tokens.commands[i];
                 std::vector<std::string>& args = command->args;
+                
                 if (args[0] == "cd") {
                         // There are two tested inputs for 'cd':
                         // (1) User provides "cd -", which directs to the previous directory that was opened
+
                         if (args[1] == "-") {
-                                chdir("OLDPWD");
+                                char* oldPwd = getenv("OLDPWD");
+                                if (oldPwd) {
+                                        chdir(oldPwd);
+                                }
                         }
                         // (2) User provides a directory to open
                         else {
@@ -120,19 +124,38 @@ void process_commands() {
                         
                         if (command->hasInput()) {    // i.e. {command} < {input file}
                                 int inputFd = open(command->in_file.c_str(), O_RDONLY); // Open input file
+                                if (inputFd < 0) {
+                                        perror("open input file");
+                                        exit(2);
+                                }
                                 dup2(inputFd, STDIN_FILENO); // Redirect STDIN from file
                                 close(inputFd);
                         }
 
                         if (command->hasOutput()) {   // i.e. {command} > {output file}
                                 int outputFd = open(command->out_file.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644); // Open output file
+                                if (outputFd < 0) {
+                                        perror("open output file");
+                                        exit(2);
+                                }
                                 dup2(outputFd, STDOUT_FILENO); // Redirect STDOUT to file
                                 close(outputFd);
                         }
 
+                        if (fdsBack[0] != -1) close(fdsBack[0]);
+                        if (fdsBack[1] != -1) close(fdsBack[1]);
+                        if (fdsFor[0] != -1) close(fdsFor[0]);
+                        if (fdsFor[1] != -1) close(fdsFor[1]);
+
                         // Execute command after any redirection
-                        char* args[] = {(char*) tokens.commands.at(0)->args.at(0).c_str(), nullptr};
-                        if (execvp(args[0], args) < 0) {  // error check
+                        // char* args[] = {(char*) tokens.commands.at(0)->args.at(0).c_str(), nullptr};
+                        std::vector<char*> execArgs;
+                        for (auto &arg : command->args) {
+                            execArgs.push_back((char*) arg.c_str());
+                        }
+                        execArgs.push_back(nullptr);
+
+                        if (execvp(execArgs[0], execArgs.data()) < 0) {  // error check
                                 perror("execvp");
                                 exit(2);
                         }
@@ -185,7 +208,7 @@ int main()
 
                 if (input.empty()) { continue; }
 
-                if(input == "exit")
+                if (input == "exit")
                 {
                         // print exit message and break out of infinite loop
                         std::cout << RED << "Now exiting shell..." << std::endl << "Goodbye" << NC << std::endl;
@@ -214,7 +237,7 @@ int main()
                     std::cerr << std::endl;
                 }
 
-                process_commands();
+                process_commands(tknr);
 
                 // // fork to create child
                 // pid_t pid = fork();
