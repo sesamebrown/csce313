@@ -1,2 +1,2 @@
-ls -l . 
+sleep 10
 exit

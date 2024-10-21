@@ -141,10 +141,10 @@ void process_commands(Tokenizer &tokens) {
                                 close(outputFd);
                         }
 
-                        if (fdsBack[0] != -1) close(fdsBack[0]);
-                        if (fdsBack[1] != -1) close(fdsBack[1]);
-                        if (fdsFor[0] != -1) close(fdsFor[0]);
-                        if (fdsFor[1] != -1) close(fdsFor[1]);
+                        // if (fdsBack[0] != -1) close(fdsBack[0]);
+                        // if (fdsBack[1] != -1) close(fdsBack[1]);
+                        // if (fdsFor[0] != -1) close(fdsFor[0]);
+                        // if (fdsFor[1] != -1) close(fdsFor[1]);
 
                         // Execute command after any redirection
                         // char* args[] = {(char*) tokens.commands.at(0)->args.at(0).c_str(), nullptr};
@@ -163,13 +163,13 @@ void process_commands(Tokenizer &tokens) {
                         // Close pipes from parent so pipes receive `EOF`
                         // Pipes will otherwise get stuck indefinitely waiting for parent input/output that will never occur                        
                         if (i > 0) {
-                                close(fdsBack[0]);
+                                // close(fdsBack[0]);
                                 close(fdsBack[1]);
                         }
 
                         if (i < tokens.commands.size() - 1) {
                                 close(fdsFor[0]);
-                                close(fdsFor[1]);
+                                // close(fdsFor[1]);
                         }
 
                         // If command is indicated as a background process, set up to prevent zombie processes
