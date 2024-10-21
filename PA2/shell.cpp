@@ -111,13 +111,13 @@ void process_commands(Tokenizer &tokens) {
                 if (pid == 0) {  // if child, exec to run command
                         if (i < tokens.commands.size() - 1) {  // i.e. {current command} | {next command} ...
                                 dup2(fdsFor[1], STDOUT_FILENO);     // Reidrect STDOUT to forward pipe
-                                close(fdsFor[1]);    // Close respective pipe end
+                                // close(fdsFor[1]);    // Close respective pipe end
                                 close(fdsFor[0]);
                         }
 
                         if (i > 0) {    // i.e. {first command} | {current command} ...
                                 dup2(fdsBack[0], STDIN_FILENO);     // Redirect STDIN to backward pipe
-                                close(fdsBack[0]);    // Close respective pipe end
+                                // close(fdsBack[0]);    // Close respective pipe end
                                 close(fdsBack[1]);
                         }
                         
