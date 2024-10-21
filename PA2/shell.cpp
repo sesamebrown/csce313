@@ -70,7 +70,7 @@ void process_commands(Tokenizer &tokens) {
         // Use getenv(), setenv(), and chdir() here to implement this command
                 Command *command = tokens.commands[i];
                 std::vector<std::string>& args = command->args;
-                
+
                 if (args[0] == "cd") {
                         // There are two tested inputs for 'cd':
                         // (1) User provides "cd -", which directs to the previous directory that was opened
@@ -85,7 +85,6 @@ void process_commands(Tokenizer &tokens) {
                         else {
                                 chdir(args[1].c_str());
                         }
-                        // TODO: maybe have to save curr directory before changing
                         continue;
                 }
 
@@ -163,6 +162,8 @@ void process_commands(Tokenizer &tokens) {
                 else {  // if parent, wait for child to finish    
                         // Close pipes from parent so pipes receive `EOF`
                         // Pipes will otherwise get stuck indefinitely waiting for parent input/output that will never occur
+                        wait(NULL);
+                        
                         if (i > 0) {
                                 close(fdsBack[0]);
                                 close(fdsBack[1]);
@@ -238,6 +239,8 @@ int main()
                 }
 
                 process_commands(tknr);
+
+                delete tknr;
 
                 // // fork to create child
                 // pid_t pid = fork();
