@@ -90,8 +90,14 @@ static void timerHandler(int sig, siginfo_t *si, void *uc)
 
 	/* TODO This Section - 2 */
 	// Officially complete the step using completedSteps and completeCount
+	comp_item->PrintComplete();
+	completedSteps->push_back(comp_item->id);
+
+	completeCount++;
 
 	// Ready to remove that dependency, call the trigger for the appropriate handler
+
+	kill(getpid(), SIGUSR1);
 	/* End Section - 2 */
 }
 
@@ -127,9 +133,6 @@ int main(int argc, char **argv)
 	sa.sa_sigaction = timerHandler;
 	sigemptyset(&sa.sa_mask);
 
-	/* TODO This Section - 1 */
-	// Associate the signal SIGRTMIN with the sa using the sigaction function
-	// Associate the appropriate handler with the SIGUSR1 signal, for removing dependencies
 	sigaction(SIGRTMIN, &sa, nullptr);
 
 	// set up usr handler
@@ -154,7 +157,6 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-
 	/* End Section - 1 */
 
 	cout << "Enjoy!" << endl;

@@ -19,7 +19,7 @@ Step::Step(int _id, string _desc, int _dur, vector<int> _deps) {
 }
 
 Step::~Step() {
-    free(t_id);
+    timer_delete(t_id);
 }
 
 // Removes the dependency from it's dependency list.
