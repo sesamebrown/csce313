@@ -162,7 +162,11 @@ int main(int argc, char **argv)
 				makeTimer(step, step->duration);
 			}
 		}
+		sleep(1);
 	}
+
+	delete completedSteps;
+	delete recipeSteps;
 	/* End Section - 1 */
 
 	cout << "Enjoy!" << endl;
