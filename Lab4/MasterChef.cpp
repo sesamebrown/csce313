@@ -108,6 +108,12 @@ void RemoveDepHandler(int sig)
 {
 	/* TODO This Section - 3 */
 	// Foreach step that has been completed since last run, remove it as a dependency
+	for (auto step : *completedSteps)
+	{
+		recipeSteps->RemoveDependency(step);
+	}
+
+	completedSteps->clear();
 	/* End Section - 3 */
 }
 
