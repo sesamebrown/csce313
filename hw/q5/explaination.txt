@@ -1,0 +1,4 @@
+This code meets the requirements because it iterates through
+the current directory and prints the contents of the directory in hierarchial order.
+The contents are printed based on their hierarchy, and the deeper inset files are printed
+with a different branch symbol to indicate their place.

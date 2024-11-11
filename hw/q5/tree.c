@@ -7,69 +7,63 @@
 
 void print_tree(const char *path, int depth, int is_last)
 {
-    DIR *dir = opendir(path); // Open directory
-    if (!dir)
-    {
-        perror("opendir");
-        return;
-    }
+    DIR *dir = opendir(path);
 
     struct dirent *entry;
-    struct stat statbuf;
 
-    // Iterate over directory entries
+    struct stat statbuf;
+    struct dirent *entries[1024]; // temp array to store directories
+    int count = 0;
+
+    // count and store directory entires
     while ((entry = readdir(dir)) != NULL)
     {
-        // Skip "." and ".."
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) // ignore . and ..
         {
-            continue;
+            entries[count++] = entry;
         }
+    }
 
-        // Create the full path to the entry
+    // loop through entries and prints
+    for (int i = 0; i < count; i++)
+    {
+        entry = entries[i];
         char fullpath[1024];
         snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
 
-        // Print the indentation for tree-like structure
-        for (int i = 0; i < depth - 1; ++i)
+        // print indentation
+        for (int j = 0; j < depth; ++j)
         {
-            printf("    ");
+            printf("|   ");
         }
 
-        // Print the branch symbol
-        if (depth > 0)
+        // [rint branch for current entry
+        if (i == count - 1)
         {
-            if (is_last)
-            {
-                printf("└─── ");
-            }
-            else
-            {
-                printf("├─── ");
-            }
-        }
-
-        // Check if entry is a directory or a file
-        if (lstat(fullpath, &statbuf) == 0 && S_ISDIR(statbuf.st_mode))
-        {
-            // Directory
-            printf("%s/\n", entry->d_name);
-            // Recursively print the contents of the directory
-            print_tree(fullpath, depth + 1, 0); // Continue with '├───'
+            printf("└─── ");
         }
         else
         {
-            // File
+            printf("├─── ");
+        }
+
+        // check if entry is a directory or a file
+        if (lstat(fullpath, &statbuf) == 0 && S_ISDIR(statbuf.st_mode))
+        {
+            printf("%s\n", entry->d_name);
+            print_tree(fullpath, depth + 1, 0); // Not last element in directory yet
+        }
+        else
+        {
             printf("%s\n", entry->d_name);
         }
     }
-
-    closedir(dir); // Close the directory stream
+    closedir(dir);
 }
 
 int main()
 {
-    const char *path = "."; // Start with current directory
-    print_tree(path, 0, 1); // Start the tree, marking the root as the last element
+    const char *path = ".";
+    print_tree(path, 0, 1);
     return 0;
 }
